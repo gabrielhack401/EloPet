@@ -17,7 +17,7 @@ service cloud.firestore {
    allow delete: if admin() || (signed() && resource.data.ownerId == request.auth.uid && resource.data.status == 'pending');
   }
   match /adoptionRequests/{id} {
-   allow create: if signed() && request.resource.data.requesterId == request.auth.uid && request.resource.data.status == 'pending' && request.resource.data.ownerId == get(/databases/$(database)/documents/animals/$(request.resource.data.animalId)).data.ownerId && request.auth.uid != request.resource.data.ownerId;
+   allow create: if signed() && request.resource.data.requesterId == request.auth.uid && request.resource.data.status == 'pending' && request.resource.data.ownerId == get(/databases/$(database)/documents/animals/$(request.resource.data.animalId)).data.ownerId && get(/databases/$(database)/documents/animals/$(request.resource.data.animalId)).data.status == 'approved' && request.auth.uid != request.resource.data.ownerId;
    allow read: if signed() && (resource.data.requesterId == request.auth.uid || resource.data.ownerId == request.auth.uid || admin());
    allow update: if admin() || (signed() && resource.data.ownerId == request.auth.uid && request.resource.data.requesterId == resource.data.requesterId && request.resource.data.animalId == resource.data.animalId && request.resource.data.ownerId == resource.data.ownerId);
    allow delete: if admin() || (signed() && resource.data.requesterId == request.auth.uid && resource.data.status == 'pending');
@@ -65,7 +65,7 @@ service cloud.firestore {
    }
   }
   match /favorites/{id} {
-   allow read, create, delete: if signed() && (request.resource == null || request.resource.data.userId == request.auth.uid);
+   allow read, delete: if signed() && resource.data.userId == request.auth.uid;\n   allow create: if signed() && request.resource.data.userId == request.auth.uid;
   }
  }
 }
