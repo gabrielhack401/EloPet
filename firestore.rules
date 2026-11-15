@@ -65,7 +65,8 @@ service cloud.firestore {
    }
   }
   match /favorites/{id} {
-   allow read, delete: if signed() && resource.data.userId == request.auth.uid;\n   allow create: if signed() && request.resource.data.userId == request.auth.uid;
+   allow read, delete: if signed() && resource.data.userId == request.auth.uid;
+   allow create: if signed() && request.resource.data.userId == request.auth.uid;
   }
  }
 }
