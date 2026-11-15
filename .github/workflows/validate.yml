@@ -1,0 +1,39 @@
+name: Validate EloPet
+on:
+  push:
+    branches: [elopet-reconstrucao-do-zero]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check web JavaScript syntax
+        run: node --check --input-type=module < web/app.js
+      - name: Validate Firebase JSON
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('firebase.json','utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('.firebaserc','utf8'))"
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Generate Android platform scaffolding if missing
+        run: |
+          if [ ! -d android ]; then flutter create . --platforms=android --org com.elopet; fi
+      - name: Resolve packages
+        run: flutter pub get
+      - name: Analyze Dart code
+        run: flutter analyze --no-pub
+      - name: Build Android debug APK
+        run: flutter build apk --debug
