@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signed(){return request.auth!=null;}
+  function admin(){return signed() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role=='admin';}
+  match /users/{uid}{
+   allow create: if signed() && request.auth.uid==uid && request.resource.data.role=='user';
+   allow read: if signed() && (request.auth.uid==uid || admin());
+   allow update: if signed() && request.auth.uid==uid && request.resource.data.role==resource.data.role;
+   allow delete: if admin();
+  }
+  match /animals/{id}{
+   allow read: if true;
+   allow create: if signed() && request.resource.data.ownerId==request.auth.uid && request.resource.data.status=='pending';
+   allow update: if admin() || (signed() && resource.data.ownerId==request.auth.uid && request.resource.data.ownerId==resource.data.ownerId && request.resource.data.status==resource.data.status);
+   allow delete: if admin() || (signed() && resource.data.ownerId==request.auth.uid);
+  }
+  match /adoptionRequests/{id}{
+   allow create: if signed() && request.resource.data.requesterId==request.auth.uid && request.resource.data.status=='pending';
+   allow read: if signed() && (resource.data.requesterId==request.auth.uid || resource.data.ownerId==request.auth.uid || admin());
+   allow update,delete: if admin() || (signed() && resource.data.ownerId==request.auth.uid);
+  }
+  match /lostFound/{id}{allow read:if true;allow create:if signed()&&request.resource.data.authorId==request.auth.uid;allow update,delete:if admin()||(signed()&&resource.data.authorId==request.auth.uid);}
+  match /reports/{id}{allow create:if signed()&&request.resource.data.reporterId==request.auth.uid;allow read,update,delete:if admin();}
+  match /fosterApplications/{id}{allow create:if signed()&&request.resource.data.userId==request.auth.uid;allow read,update,delete:if admin()||(signed()&&resource.data.userId==request.auth.uid);}
+  match /donations/{id}{allow create:if signed()&&request.resource.data.userId==request.auth.uid;allow read,update,delete:if admin()||(signed()&&resource.data.userId==request.auth.uid);}
+  match /volunteers/{id}{allow create:if signed()&&request.resource.data.userId==request.auth.uid;allow read,update,delete:if admin()||(signed()&&resource.data.userId==request.auth.uid);}
+  match /clinics/{id}{allow read:true;allow write:if admin();}
+  match /conversations/{id}{allow read,write:if signed()&&request.auth.uid in resource.data.memberIds;match /messages/{mid}{allow read,create:if signed();}}
+ }
+}
